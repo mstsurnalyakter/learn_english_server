@@ -35,17 +35,38 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const db = client.db("learnEnglish");
+    const usersCollection = db.collection("users");
 
- const db = client.db("learnEnglish");
- const usersCollection = db.collection("users");
+    // save a user data in database
+    app.put("/users", async (req, res) => {
+      const user = req.body;
+
+      const query = { email: user?.email };
+      // check if user already exists in db
+      const isExist = await usersCollection.findOne(query);
+      if (isExist) {
+          return res.send(isExist);
+      }
+
+      // save user for the first time
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...user,
+          timestamp: Date.now(),
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc, options);
 
 
-
-
-
-
-
-
+    //   // welcome new user
+    //   sendEmail(user?.email, {
+    //     subject: "Welcome to LearnEnglish!",
+    //     message: `Hope you will find you destination`,
+    //   });
+      res.send(result);
+    });
 
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
