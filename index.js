@@ -5,22 +5,17 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 
-
 const port = process.env.PORT || 5000;
-
 
 //building middleware
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ["http://localhost:5173", "http://localhost:5174"],
   credentials: true,
   optionSuccessStatus: 200,
-}
-app.use(cors(corsOptions))
+};
+app.use(cors(corsOptions));
 
-app.use(express.json())
-
-
-
+app.use(express.json());
 
 //custom middleware
 const verifyToken = (req, res, next) => {
@@ -36,12 +31,7 @@ const verifyToken = (req, res, next) => {
     req.decoded = decoded;
     next();
   });
-
 };
-
-
-
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.jimwvxl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -98,7 +88,7 @@ async function run() {
       res.send(result);
     });
 
-    // tutor api
+    // tutor related api
     app.post("/create-study-session", async (req, res) => {
       console.log(req.body);
       const result = await studySessionsCollection.insertOne(req.body);
@@ -112,7 +102,7 @@ async function run() {
       res.send(result);
     });
 
-    // Update Bid status
+    // Update status
     app.patch("/study-session/:id", async (req, res) => {
       const id = req.params.id;
       const status = req.body;
@@ -123,6 +113,22 @@ async function run() {
       const result = await studySessionsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
+    // admin related api
+
+    //get all session
+    app.get("/study-sessions", async (req, res) => {
+      const result = await studySessionsCollection
+        .find()
+        .toArray();
+      res.send(result);
+    });
+
+
+
+
+
+    
 
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
@@ -137,14 +143,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-
-
-
-
-
-
-
 
 app.get("/", (req, res) => {
   res.send("Hello from LearnEnglish Server..");
