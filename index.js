@@ -118,17 +118,21 @@ async function run() {
 
     //get all session
     app.get("/study-sessions", async (req, res) => {
-      const result = await studySessionsCollection
-        .find()
-        .toArray();
+      const result = await studySessionsCollection.find().toArray();
       res.send(result);
     });
 
-
-
-
-
-    
+    // Update registrationFee
+    app.patch("/study-session-registrationFee/:id", async (req, res) => {
+      const id = req.params.id;
+      const registrationFee = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: registrationFee,
+      };
+      const result = await studySessionsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
