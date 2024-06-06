@@ -114,7 +114,7 @@ async function run() {
       res.send(result);
     });
 
-    // admin related api
+    // --------------------admin related api------------------------//
 
     //get all session
     app.get("/study-sessions", async (req, res) => {
@@ -137,6 +137,21 @@ async function run() {
         $set: registrationFee,
       };
       const result = await studySessionsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    //update user role
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const query = { email };
+      const updateDoc = {
+        $set: {
+          ...user,
+          timestamp: Date.now(),
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
