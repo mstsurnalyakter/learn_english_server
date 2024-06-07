@@ -49,6 +49,7 @@ async function run() {
     const db = client.db("learnEnglish");
     const usersCollection = db.collection("users");
     const studySessionsCollection = db.collection("studySessions");
+    const reviewsCollection = db.collection("reviews");
 
     //jwt related api
     app.post("/jwt", async (req, res) => {
@@ -95,6 +96,19 @@ async function run() {
       const result = await studySessionsCollection.findOne(query);
       res.send(result)
     });
+
+
+
+    //---------------------- student related api-------------------------//
+    app.post("/review",async(req,res)=>{
+      console.log(req.body);
+      const result = await reviewsCollection.insertOne(req.body);
+      res.send(result)
+
+    })
+
+
+
 
     //---------------------- tutor related api-------------------------//
     app.post("/create-study-session", async (req, res) => {
