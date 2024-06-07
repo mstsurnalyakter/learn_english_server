@@ -88,7 +88,15 @@ async function run() {
       res.send(result);
     });
 
-    // tutor related api
+
+    //----------------------- general api -----------------------------//
+    app.get("/session/:id",async(req,res)=>{
+      const query = {_id: new ObjectId(req.params.id)};
+      const result = await studySessionsCollection.findOne(query);
+      res.send(result)
+    });
+
+    //---------------------- tutor related api-------------------------//
     app.post("/create-study-session", async (req, res) => {
       console.log(req.body);
       const result = await studySessionsCollection.insertOne(req.body);
