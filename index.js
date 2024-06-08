@@ -56,6 +56,7 @@ async function run() {
     const studySessionsCollection = db.collection("studySessions");
     const reviewsCollection = db.collection("reviews");
     const bookedSessionsCollection = db.collection("bookedSessions");
+    const notesCollection = db.collection("notes");
 
     //jwt related api
     app.post("/jwt", async (req, res) => {
@@ -147,6 +148,13 @@ async function run() {
       const result = await reviewsCollection.insertOne(req.body);
       res.send(result);
     });
+
+    app.post("/note", async (req, res) => {
+      console.log(req.body);
+      const result = await notesCollection.insertOne(req.body);
+      res.send(result);
+    });
+
     app.get("/reviews/:id", async (req, res) => {
        const query = { sessionID:req.params.id};
       const result = await reviewsCollection.find(query).toArray();
