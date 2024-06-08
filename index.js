@@ -4,7 +4,7 @@ require("dotenv").config();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 //building middleware
@@ -65,6 +65,42 @@ async function run() {
       res.send({ token });
     });
 
+    // create-payment-intent
+    // app.post("/create-payment-intent", verifyToken, async (req, res) => {
+    //   const price = req.body.price;
+    //   const priceInCent = parseFloat(price) * 100;
+    //   if (!price || priceInCent < 1) return;
+    //   // generate clientSecret
+    //   const { client_secret } = await stripe.paymentIntents.create({
+    //     amount: priceInCent,
+    //     currency: "usd",
+    //     // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+    //     automatic_payment_methods: {
+    //       enabled: true,
+    //     },
+    //   });
+    //   // send clientSecret as response
+    //   res.send({ clientSecret: client_secret });
+    // });
+
+    // create-payment-intent
+    app.post("/create-payment-intent",verifyToken, async (req, res) => {
+      const registrationFee = req.body.registrationFee;
+      const priceInCent = parseFloat(registrationFee) * 100;
+      if (!registrationFee || priceInCent < 1) return;
+      // generate clientSecret
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: "usd",
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      // send clientSecret as response
+      res.send({ clientSecret: client_secret });
+    });
+
     // save a user data in database
     app.put("/users", async (req, res) => {
       const user = req.body;
@@ -94,31 +130,23 @@ async function run() {
       res.send(result);
     });
 
-
     //----------------------- general api -----------------------------//
-    app.get("/session/:id",async(req,res)=>{
-      const query = {_id: new ObjectId(req.params.id)};
+    app.get("/session/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
       const result = await studySessionsCollection.findOne(query);
-      res.send(result)
+      res.send(result);
     });
 
-
-
     //---------------------- student related api-------------------------//
-    app.post("/review",async(req,res)=>{
+    app.post("/review", async (req, res) => {
       console.log(req.body);
       const result = await reviewsCollection.insertOne(req.body);
-      res.send(result)
-
-    })
-    app.get("/reviews",async(req,res)=>{
+      res.send(result);
+    });
+    app.get("/reviews", async (req, res) => {
       const result = await reviewsCollection.find().toArray();
-      res.send(result)
-
-    })
-
-
-
+      res.send(result);
+    });
 
     //---------------------- tutor related api-------------------------//
     app.post("/create-study-session", async (req, res) => {
