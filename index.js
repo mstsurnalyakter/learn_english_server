@@ -161,6 +161,12 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/note/:id",async (req,res)=>{
+      const query = {_id: new ObjectId(req.params.id)};
+      const result = await notesCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.get("/reviews/:id", async (req, res) => {
        const query = { sessionID:req.params.id};
       const result = await reviewsCollection.find(query).toArray();
