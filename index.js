@@ -183,6 +183,14 @@ async function run() {
       res.send(result);
     })
 
+    app.get("/bookingSession/:email", async (req,res)=>{
+       const email = req.params.email;
+       const query = {"student.email":email}
+       console.log(query);
+       const result = await bookedSessionsCollection.find(query).toArray();
+       res.send(result);
+    });
+
     //---------------------- tutor related api-------------------------//
     app.post("/create-study-session", async (req, res) => {
       console.log(req.body);
