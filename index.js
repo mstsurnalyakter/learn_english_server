@@ -122,6 +122,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/tutors/:tutor", async(req,res)=>{
+      // user?.role === 'tutor
+       const query = { role: req.params.tutor };
+       const result = await usersCollection.find(query).toArray();
+       res.send(result);
+    })
+
     //---------------------- student related api-------------------------//
     app.post("/review", async (req, res) => {
       console.log(req.body);
