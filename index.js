@@ -55,6 +55,7 @@ async function run() {
     const usersCollection = db.collection("users");
     const studySessionsCollection = db.collection("studySessions");
     const reviewsCollection = db.collection("reviews");
+    const bookedSessionsCollection = db.collection("bookedSessions");
 
     //jwt related api
     app.post("/jwt", async (req, res) => {
@@ -65,23 +66,7 @@ async function run() {
       res.send({ token });
     });
 
-    // create-payment-intent
-    // app.post("/create-payment-intent", verifyToken, async (req, res) => {
-    //   const price = req.body.price;
-    //   const priceInCent = parseFloat(price) * 100;
-    //   if (!price || priceInCent < 1) return;
-    //   // generate clientSecret
-    //   const { client_secret } = await stripe.paymentIntents.create({
-    //     amount: priceInCent,
-    //     currency: "usd",
-    //     // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-    //     automatic_payment_methods: {
-    //       enabled: true,
-    //     },
-    //   });
-    //   // send clientSecret as response
-    //   res.send({ clientSecret: client_secret });
-    // });
+
 
     // create-payment-intent
     app.post("/create-payment-intent",verifyToken, async (req, res) => {
@@ -147,6 +132,36 @@ async function run() {
       const result = await reviewsCollection.find().toArray();
       res.send(result);
     });
+
+    app.post("/booking",async(req,res)=>{
+      const bookingInfo = req.body;
+      const id = bookingInfo?.sessionID;
+
+      const alreadyBooked = await bookedSessionsCollection.findOne({
+        "student.email": bookingInfo?.student?.email,
+        sessionID: id,
+      });
+
+      // check student already booked the session
+      if (alreadyBooked) {
+        return res.status(400).send(`You have already booked this season`);
+      }
+
+
+      console.log(bookingInfo);
+      const result = await bookedSessionsCollection.insertOne(bookingInfo);
+
+
+        const updateDoc = {
+          $inc: { students: 1 },
+        };
+        const query = { _id: new ObjectId(id) };
+
+        await studySessionsCollection.updateOne(query, updateDoc);
+
+
+      res.send(result);
+    })
 
     //---------------------- tutor related api-------------------------//
     app.post("/create-study-session", async (req, res) => {
