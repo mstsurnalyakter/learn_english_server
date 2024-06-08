@@ -155,6 +155,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/note/:email", async (req, res) => {
+     const email = req.params.email;
+      const result = await notesCollection.find({email}).toArray();
+      res.send(result);
+    });
+
     app.get("/reviews/:id", async (req, res) => {
        const query = { sessionID:req.params.id};
       const result = await reviewsCollection.find(query).toArray();
