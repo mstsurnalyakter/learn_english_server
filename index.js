@@ -301,6 +301,13 @@ async function run() {
       res.send(result);
     });
 
+      app.delete("/allMaterial/:id", async (req, res) => {
+        const result = await materialsCollection.deleteOne({
+          _id: new ObjectId(req.params.id),
+        });
+        res.send(result);
+      });
+
      app.get("/allMaterials", async (req, res) => {
        const result = await materialsCollection
          .find()
