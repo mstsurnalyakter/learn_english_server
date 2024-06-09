@@ -234,6 +234,7 @@ async function run() {
         .toArray();
       res.send(result);
     });
+
     app.get("/material/:id", async (req, res) => {
       const result = await materialsCollection.findOne({
         _id: new ObjectId(req.params.id),
@@ -241,6 +242,18 @@ async function run() {
 
       res.send(result);
     });
+
+     app.put("/material/update/:id",async (req, res) => {
+         const query = { _id: new ObjectId(req.params.id) };
+        //  const roomData = req.body;
+        console.log(req.body);
+         const updateDoc = {
+           $set: req.body
+         };
+         const result = await materialsCollection.updateOne(query, updateDoc);
+         res.send(result);
+       }
+     );
 
     app.delete("/material/:id", async (req, res) => {
       const result = await materialsCollection.deleteOne({
