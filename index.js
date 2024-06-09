@@ -33,10 +33,13 @@ const verifyToken = (req, res, next) => {
     if (err) {
       return res.status(401).send({ message: "unauthorized access." });
     }
-    req.decoded = decoded;
+    req.user = decoded;
     next();
   });
 };
+
+
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.jimwvxl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -59,6 +62,34 @@ async function run() {
     const notesCollection = db.collection("notes");
     const materialsCollection = db.collection("materials");
 
+    // verify admin middleware
+    const verifyAdmin = async (req, res, next) => {
+      console.log("admin middleware");
+      const user = req.user;
+      const query = { email: user?.email };
+      const result = await usersCollection.findOne(query);
+
+      if (!result || result?.role !== "admin") {
+        return res.status(401).send({ message: "unauthorized access." });
+      }
+
+      next();
+    };
+
+    // verify tutor middleware
+    const verifyTutor = async (req, res, next) => {
+      console.log("tutor middleware");
+      const user = req.user;
+      const query = { email: user?.email };
+      const result = await usersCollection.findOne(query);
+
+      if (!result || result?.role !== "tutor") {
+        return res.status(401).send({ message: "unauthorized access." });
+      }
+
+      next();
+    };
+
     //jwt related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -68,10 +99,8 @@ async function run() {
       res.send({ token });
     });
 
-
-
     // create-payment-intent
-    app.post("/create-payment-intent",verifyToken, async (req, res) => {
+    app.post("/create-payment-intent", verifyToken, async (req, res) => {
       const registrationFee = req.body.registrationFee;
       const priceInCent = parseFloat(registrationFee) * 100;
       if (!registrationFee || priceInCent < 1) return;
@@ -118,70 +147,68 @@ async function run() {
     });
 
     //----------------------- general api -----------------------------//
-    app.get("/session/:id",verifyToken, async (req, res) => {
+    app.get("/session/:id", verifyToken, async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await studySessionsCollection.findOne(query);
       res.send(result);
     });
 
-    app.get("/tutors/:tutor", async(req,res)=>{
-       const query = { role: req.params.tutor };
-       const result = await usersCollection.find(query).toArray();
-       res.send(result);
-    })
+    app.get("/tutors/:tutor", async (req, res) => {
+      const query = { role: req.params.tutor };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
     app.get("/sessions/:approved", async (req, res) => {
       const query = { status: req.params.approved };
       const result = await studySessionsCollection.find(query).toArray();
       res.send(result);
     });
 
-      app.get("/user/:email",verifyToken, async (req, res) => {
-        const email = req.params.email;
-        const result = await usersCollection.findOne({ email });
-        res.send(result);
-      });
-
-
+    app.get("/user/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const result = await usersCollection.findOne({ email });
+      res.send(result);
+    });
 
     //---------------------- student related api-------------------------//
-    app.post("/review",verifyToken, async (req, res) => {
+    app.post("/review", verifyToken, async (req, res) => {
       const result = await reviewsCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.post("/note", async,verifyToken, (req, res) => {
+    app.post("/note", verifyToken, async (req, res) => {
       const result = await notesCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.get("/note/:email",verifyToken, async (req, res) => {
-     const email = req.params.email;
-      const result = await notesCollection.find({email}).toArray();
+    app.get("/note/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const result = await notesCollection.find({ email }).toArray();
       res.send(result);
     });
 
-    app.delete("/note/:id",verifyToken, async (req,res)=>{
-      const query = {_id: new ObjectId(req.params.id)};
+    app.delete("/note/:id", verifyToken, async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
       const result = await notesCollection.deleteOne(query);
       res.send(result);
     });
 
-    app.put("/note/:id", verifyToken,async (req,res)=>{
-      const query = {_id: new ObjectId(req.params.id)};
+    app.put("/note/:id", verifyToken, async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
       const updateDoc = {
-        $set:req.body
-      }
-      const result = await notesCollection.updateOne(query,updateDoc);
+        $set: req.body,
+      };
+      const result = await notesCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
     app.get("/reviews/:id", verifyToken, async (req, res) => {
-       const query = { sessionID:req.params.id};
+      const query = { sessionID: req.params.id };
       const result = await reviewsCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.post("/booking",verifyToken, async(req,res)=>{
+    app.post("/booking", verifyToken, async (req, res) => {
       const bookingInfo = req.body;
       const id = bookingInfo?.sessionID;
 
@@ -197,45 +224,48 @@ async function run() {
 
       const result = await bookedSessionsCollection.insertOne(bookingInfo);
 
+      const updateDoc = {
+        $inc: { students: 1 },
+      };
+      const query = { _id: new ObjectId(id) };
 
-        const updateDoc = {
-          $inc: { students: 1 },
-        };
-        const query = { _id: new ObjectId(id) };
-
-        await studySessionsCollection.updateOne(query, updateDoc);
-
+      await studySessionsCollection.updateOne(query, updateDoc);
 
       res.send(result);
-    })
+    });
 
-    app.get("/bookingSession/:email",verifyToken, async (req,res)=>{
-       const email = req.params.email;
-       const query = {"student.email":email}
-       const result = await bookedSessionsCollection.find(query).toArray();
-       res.send(result);
+    app.get("/bookingSession/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const query = { "student.email": email };
+      const result = await bookedSessionsCollection.find(query).toArray();
+      res.send(result);
     });
 
     //---------------------- tutor related api-------------------------//
-    app.post("/create-study-session",verifyToken, async (req, res) => {
+    app.post("/create-study-session", verifyToken,verifyTutor, async (req, res) => {
       const result = await studySessionsCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.post("/upload-material",verifyToken, async (req, res) => {
+    app.post("/upload-material", verifyToken, verifyTutor, async (req, res) => {
       console.log(req.body);
       const result = await materialsCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.get("/tutorMaterials/:email",verifyToken, async (req, res) => {
-      const result = await materialsCollection
-        .find({ email: req.params.email })
-        .toArray();
-      res.send(result);
-    });
+    app.get(
+      "/tutorMaterials/:email",
+      verifyToken,
+      verifyTutor,
+      async (req, res) => {
+        const result = await materialsCollection
+          .find({ email: req.params.email })
+          .toArray();
+        res.send(result);
+      }
+    );
 
-    app.get("/material/:id",verifyToken, async (req, res) => {
+    app.get("/material/:id", verifyToken, verifyTutor, async (req, res) => {
       const result = await materialsCollection.findOne({
         _id: new ObjectId(req.params.id),
       });
@@ -243,98 +273,129 @@ async function run() {
       res.send(result);
     });
 
-     app.put("/material/update/:id", verifyToken, async (req, res) => {
-         const query = { _id: new ObjectId(req.params.id) };
+    app.put(
+      "/material/update/:id",
+      verifyToken,
+      verifyTutor,
+      async (req, res) => {
+        const query = { _id: new ObjectId(req.params.id) };
         console.log(req.body);
-         const updateDoc = {
-           $set: req.body
-         };
-         const result = await materialsCollection.updateOne(query, updateDoc);
-         res.send(result);
-       }
-     );
+        const updateDoc = {
+          $set: req.body,
+        };
+        const result = await materialsCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
 
-    app.delete("/material/:id",verifyToken, async (req, res) => {
+    app.delete("/material/:id", verifyToken, verifyTutor, async (req, res) => {
       const result = await materialsCollection.deleteOne({
         _id: new ObjectId(req.params.id),
       });
       res.send(result);
     });
 
-    app.get("/study-session/:email",verifyToken, async (req, res) => {
-      const result = await studySessionsCollection
-        .find({ "user.email": req.params.email })
-        .toArray();
-      res.send(result);
-    });
+    app.get(
+      "/study-session/:email",
+      verifyToken,
+      verifyTutor,
+      async (req, res) => {
+        const result = await studySessionsCollection
+          .find({ "user.email": req.params.email })
+          .toArray();
+        res.send(result);
+      }
+    );
 
-    app.get("/sessions/approved/:email",verifyToken, async (req, res) => {
-      const query = {
-        "user.email": req.params.email,
-        status: "approved",
-      };
+    app.get(
+      "/sessions/approved/:email",
+      verifyToken,
+      verifyTutor,
+      async (req, res) => {
+        const query = {
+          "user.email": req.params.email,
+          status: "approved",
+        };
 
-      console.log(query);
-      const result = await studySessionsCollection
-        .find(query)
-        .toArray();
-      res.send(result);
-    });
+        console.log(query);
+        const result = await studySessionsCollection.find(query).toArray();
+        res.send(result);
+      }
+    );
 
     // Update status
-    app.patch("/study-session/:id",verifyToken, async (req, res) => {
-      const id = req.params.id;
-      const status = req.body;
-      const query = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: status,
-      };
-      const result = await studySessionsCollection.updateOne(query, updateDoc);
-      res.send(result);
-    });
+    app.patch(
+      "/study-session/:id",
+      verifyToken,
+      verifyTutor,
+      async (req, res) => {
+        const id = req.params.id;
+        const status = req.body;
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: status,
+        };
+        const result = await studySessionsCollection.updateOne(
+          query,
+          updateDoc
+        );
+        res.send(result);
+      }
+    );
 
     // --------------------admin related api------------------------//
 
     //get all session
-    app.get("/study-sessions",verifyToken, async (req, res) => {
+    app.get("/study-sessions", verifyToken, verifyAdmin, async (req, res) => {
       const result = await studySessionsCollection.find().toArray();
       res.send(result);
     });
 
-      app.delete("/allMaterial/:id",verifyToken, async (req, res) => {
+    app.delete(
+      "/allMaterial/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
         const result = await materialsCollection.deleteOne({
           _id: new ObjectId(req.params.id),
         });
         res.send(result);
-      });
+      }
+    );
 
-     app.get("/allMaterials",verifyToken, async (req, res) => {
-       const result = await materialsCollection
-         .find()
-         .toArray();
-       res.send(result);
-     });
+    app.get("/allMaterials", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await materialsCollection.find().toArray();
+      res.send(result);
+    });
 
     //get all users
-    app.get("/users",verifyToken, async (req, res) => {
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
     // Update registrationFee
-    app.patch("/study-session-registrationFee/:id",verifyToken, async (req, res) => {
-      const id = req.params.id;
-      const registrationFee = req.body;
-      const query = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: registrationFee,
-      };
-      const result = await studySessionsCollection.updateOne(query, updateDoc);
-      res.send(result);
-    });
+    app.patch(
+      "/study-session-registrationFee/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const registrationFee = req.body;
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: registrationFee,
+        };
+        const result = await studySessionsCollection.updateOne(
+          query,
+          updateDoc
+        );
+        res.send(result);
+      }
+    );
 
     //update user role
-    app.patch("/users/:email",verifyToken, async (req, res) => {
+    app.patch("/users/:email", verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       const query = { email };
