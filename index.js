@@ -241,6 +241,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/my-materials", verifyToken,  async (req, res) => {
+      const result = await materialsCollection.find().toArray();
+      res.send(result);
+    });
+
+
     //---------------------- tutor related api-------------------------//
     app.post("/create-study-session", verifyToken,verifyTutor, async (req, res) => {
       const result = await studySessionsCollection.insertOne(req.body);
