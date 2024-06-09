@@ -202,7 +202,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/reviews/:id", verifyToken, async (req, res) => {
+    app.get("/reviews/:id",verifyToken, async (req, res) => {
       const query = { sessionID: req.params.id };
       const result = await reviewsCollection.find(query).toArray();
       res.send(result);
