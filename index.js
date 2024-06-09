@@ -364,15 +364,54 @@ async function run() {
     );
 
     app.get("/allMaterials", verifyToken, verifyAdmin, async (req, res) => {
-      const result = await materialsCollection.find().toArray();
+      // const result = await materialsCollection.find().toArray();
+      // res.send(result);
+      const page = parseInt(req.query.page) - 1;
+      const size = parseInt(req.query.size);
+
+      const result = await materialsCollection
+        .find()
+        .skip(page * size)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
+
+
+      app.get(
+        "/materials-count",
+        verifyToken,
+        verifyAdmin,
+        async (req, res) => {
+          const count = await materialsCollection.countDocuments();
+          res.send({ count });
+        }
+      );
+
+
 
     //get all users
     app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
+
+    app.get("/all-users",verifyToken,verifyAdmin, async(req,res)=>{
+      const page = parseInt(req.query.page) - 1;
+      const size = parseInt(req.query.size);
+
+      const result = await usersCollection
+        .find()
+        .skip(page * size)
+        .limit(size)
+        .toArray();
+      res.send(result);
+    });
+
+      app.get("/users-count", verifyToken, verifyAdmin, async (req, res) => {
+        const count = await usersCollection.countDocuments();
+        res.send({ count });
+      });
 
     // Update registrationFee
     app.patch(
