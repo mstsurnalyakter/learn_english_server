@@ -234,6 +234,13 @@ async function run() {
         .toArray();
       res.send(result);
     });
+    app.get("/material/:id", async (req, res) => {
+      const result = await materialsCollection.findOne({
+        _id: new ObjectId(req.params.id),
+      });
+
+      res.send(result);
+    });
 
     app.delete("/material/:id", async (req, res) => {
       const result = await materialsCollection.deleteOne({
