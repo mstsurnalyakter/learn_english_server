@@ -235,6 +235,13 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/material/:id", async (req, res) => {
+      const result = await materialsCollection.deleteOne({
+        _id: new ObjectId(req.params.id),
+      });
+      res.send(result);
+    });
+
     app.get("/study-session/:email", async (req, res) => {
       const result = await studySessionsCollection
         .find({ "user.email": req.params.email })
