@@ -118,7 +118,7 @@ async function run() {
     });
 
     //----------------------- general api -----------------------------//
-    app.get("/session/:id", async (req, res) => {
+    app.get("/session/:id",verifyToken, async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await studySessionsCollection.findOne(query);
       res.send(result);
@@ -135,7 +135,7 @@ async function run() {
       res.send(result);
     });
 
-      app.get("/user/:email", async (req, res) => {
+      app.get("/user/:email",verifyToken, async (req, res) => {
         const email = req.params.email;
         const result = await usersCollection.findOne({ email });
         res.send(result);
@@ -144,29 +144,29 @@ async function run() {
 
 
     //---------------------- student related api-------------------------//
-    app.post("/review", async (req, res) => {
+    app.post("/review",verifyToken, async (req, res) => {
       const result = await reviewsCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.post("/note", async (req, res) => {
+    app.post("/note", async,verifyToken, (req, res) => {
       const result = await notesCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.get("/note/:email", async (req, res) => {
+    app.get("/note/:email",verifyToken, async (req, res) => {
      const email = req.params.email;
       const result = await notesCollection.find({email}).toArray();
       res.send(result);
     });
 
-    app.delete("/note/:id",async (req,res)=>{
+    app.delete("/note/:id",verifyToken, async (req,res)=>{
       const query = {_id: new ObjectId(req.params.id)};
       const result = await notesCollection.deleteOne(query);
       res.send(result);
     });
 
-    app.put("/note/:id",async (req,res)=>{
+    app.put("/note/:id", verifyToken,async (req,res)=>{
       const query = {_id: new ObjectId(req.params.id)};
       const updateDoc = {
         $set:req.body
@@ -175,13 +175,13 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/reviews/:id", async (req, res) => {
+    app.get("/reviews/:id", verifyToken, async (req, res) => {
        const query = { sessionID:req.params.id};
       const result = await reviewsCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.post("/booking",async(req,res)=>{
+    app.post("/booking",verifyToken, async(req,res)=>{
       const bookingInfo = req.body;
       const id = bookingInfo?.sessionID;
 
@@ -209,7 +209,7 @@ async function run() {
       res.send(result);
     })
 
-    app.get("/bookingSession/:email", async (req,res)=>{
+    app.get("/bookingSession/:email",verifyToken, async (req,res)=>{
        const email = req.params.email;
        const query = {"student.email":email}
        const result = await bookedSessionsCollection.find(query).toArray();
@@ -217,25 +217,25 @@ async function run() {
     });
 
     //---------------------- tutor related api-------------------------//
-    app.post("/create-study-session", async (req, res) => {
+    app.post("/create-study-session",verifyToken, async (req, res) => {
       const result = await studySessionsCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.post("/upload-material", async (req, res) => {
+    app.post("/upload-material",verifyToken, async (req, res) => {
       console.log(req.body);
       const result = await materialsCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.get("/tutorMaterials/:email", async (req, res) => {
+    app.get("/tutorMaterials/:email",verifyToken, async (req, res) => {
       const result = await materialsCollection
         .find({ email: req.params.email })
         .toArray();
       res.send(result);
     });
 
-    app.get("/material/:id", async (req, res) => {
+    app.get("/material/:id",verifyToken, async (req, res) => {
       const result = await materialsCollection.findOne({
         _id: new ObjectId(req.params.id),
       });
@@ -243,7 +243,7 @@ async function run() {
       res.send(result);
     });
 
-     app.put("/material/update/:id",async (req, res) => {
+     app.put("/material/update/:id", verifyToken, async (req, res) => {
          const query = { _id: new ObjectId(req.params.id) };
         console.log(req.body);
          const updateDoc = {
@@ -254,21 +254,21 @@ async function run() {
        }
      );
 
-    app.delete("/material/:id", async (req, res) => {
+    app.delete("/material/:id",verifyToken, async (req, res) => {
       const result = await materialsCollection.deleteOne({
         _id: new ObjectId(req.params.id),
       });
       res.send(result);
     });
 
-    app.get("/study-session/:email", async (req, res) => {
+    app.get("/study-session/:email",verifyToken, async (req, res) => {
       const result = await studySessionsCollection
         .find({ "user.email": req.params.email })
         .toArray();
       res.send(result);
     });
 
-    app.get("/sessions/approved/:email", async (req, res) => {
+    app.get("/sessions/approved/:email",verifyToken, async (req, res) => {
       const query = {
         "user.email": req.params.email,
         status: "approved",
@@ -282,7 +282,7 @@ async function run() {
     });
 
     // Update status
-    app.patch("/study-session/:id", async (req, res) => {
+    app.patch("/study-session/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const status = req.body;
       const query = { _id: new ObjectId(id) };
@@ -296,19 +296,19 @@ async function run() {
     // --------------------admin related api------------------------//
 
     //get all session
-    app.get("/study-sessions", async (req, res) => {
+    app.get("/study-sessions",verifyToken, async (req, res) => {
       const result = await studySessionsCollection.find().toArray();
       res.send(result);
     });
 
-      app.delete("/allMaterial/:id", async (req, res) => {
+      app.delete("/allMaterial/:id",verifyToken, async (req, res) => {
         const result = await materialsCollection.deleteOne({
           _id: new ObjectId(req.params.id),
         });
         res.send(result);
       });
 
-     app.get("/allMaterials", async (req, res) => {
+     app.get("/allMaterials",verifyToken, async (req, res) => {
        const result = await materialsCollection
          .find()
          .toArray();
@@ -316,13 +316,13 @@ async function run() {
      });
 
     //get all users
-    app.get("/users", async (req, res) => {
+    app.get("/users",verifyToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
     // Update registrationFee
-    app.patch("/study-session-registrationFee/:id", async (req, res) => {
+    app.patch("/study-session-registrationFee/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const registrationFee = req.body;
       const query = { _id: new ObjectId(id) };
@@ -334,7 +334,7 @@ async function run() {
     });
 
     //update user role
-    app.patch("/users/:email", async (req, res) => {
+    app.patch("/users/:email",verifyToken, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       const query = { email };
