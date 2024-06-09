@@ -245,7 +245,6 @@ async function run() {
 
      app.put("/material/update/:id",async (req, res) => {
          const query = { _id: new ObjectId(req.params.id) };
-        //  const roomData = req.body;
         console.log(req.body);
          const updateDoc = {
            $set: req.body
@@ -301,6 +300,13 @@ async function run() {
       const result = await studySessionsCollection.find().toArray();
       res.send(result);
     });
+
+     app.get("/allMaterials", async (req, res) => {
+       const result = await materialsCollection
+         .find()
+         .toArray();
+       res.send(result);
+     });
 
     //get all users
     app.get("/users", async (req, res) => {
