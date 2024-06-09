@@ -228,6 +228,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/tutorMaterials/:email", async (req, res) => {
+      const result = await materialsCollection
+        .find({ email: req.params.email })
+        .toArray();
+      res.send(result);
+    });
+
     app.get("/study-session/:email", async (req, res) => {
       const result = await studySessionsCollection
         .find({ "user.email": req.params.email })
