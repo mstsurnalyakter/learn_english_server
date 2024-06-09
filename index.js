@@ -57,6 +57,7 @@ async function run() {
     const reviewsCollection = db.collection("reviews");
     const bookedSessionsCollection = db.collection("bookedSessions");
     const notesCollection = db.collection("notes");
+    const materialsCollection = db.collection("materials");
 
     //jwt related api
     app.post("/jwt", async (req, res) => {
@@ -144,13 +145,11 @@ async function run() {
 
     //---------------------- student related api-------------------------//
     app.post("/review", async (req, res) => {
-      console.log(req.body);
       const result = await reviewsCollection.insertOne(req.body);
       res.send(result);
     });
 
     app.post("/note", async (req, res) => {
-      console.log(req.body);
       const result = await notesCollection.insertOne(req.body);
       res.send(result);
     });
@@ -166,10 +165,9 @@ async function run() {
       const result = await notesCollection.deleteOne(query);
       res.send(result);
     });
-    
+
     app.put("/note/:id",async (req,res)=>{
       const query = {_id: new ObjectId(req.params.id)};
-      console.log(req.body);
       const updateDoc = {
         $set:req.body
       }
@@ -197,8 +195,6 @@ async function run() {
         return res.status(400).send(`You have already booked this season`);
       }
 
-
-      console.log(bookingInfo);
       const result = await bookedSessionsCollection.insertOne(bookingInfo);
 
 
@@ -216,21 +212,38 @@ async function run() {
     app.get("/bookingSession/:email", async (req,res)=>{
        const email = req.params.email;
        const query = {"student.email":email}
-       console.log(query);
        const result = await bookedSessionsCollection.find(query).toArray();
        res.send(result);
     });
 
     //---------------------- tutor related api-------------------------//
     app.post("/create-study-session", async (req, res) => {
-      console.log(req.body);
       const result = await studySessionsCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    app.post("/upload-material", async (req, res) => {
+      console.log(req.body);
+      const result = await materialsCollection.insertOne(req.body);
       res.send(result);
     });
 
     app.get("/study-session/:email", async (req, res) => {
       const result = await studySessionsCollection
         .find({ "user.email": req.params.email })
+        .toArray();
+      res.send(result);
+    });
+
+    app.get("/sessions/approved/:email", async (req, res) => {
+      const query = {
+        "user.email": req.params.email,
+        status: "approved",
+      };
+
+      console.log(query);
+      const result = await studySessionsCollection
+        .find(query)
         .toArray();
       res.send(result);
     });
