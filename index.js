@@ -405,9 +405,17 @@ async function run() {
     app.get("/all-users",verifyToken,verifyAdmin, async(req,res)=>{
       const page = parseInt(req.query.page) - 1;
       const size = parseInt(req.query.size);
+      const search = req.query.search;
+
+        const query = {
+          $or: [
+            { email: { $regex: search, $options: "i" } },
+            { name: { $regex: search, $options: "i" } },
+          ],
+        };
 
       const result = await usersCollection
-        .find()
+        .find(query)
         .skip(page * size)
         .limit(size)
         .toArray();
@@ -415,7 +423,14 @@ async function run() {
     });
 
       app.get("/users-count", verifyToken, verifyAdmin, async (req, res) => {
-        const count = await usersCollection.countDocuments();
+      const search = req.query.search;
+       const query = {
+         $or: [
+           { email: { $regex: search, $options: "i" } },
+           { name: { $regex: search, $options: "i" } },
+         ],
+       };
+        const count = await usersCollection.countDocuments(query);
         res.send({ count });
       });
 
