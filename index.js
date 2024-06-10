@@ -260,7 +260,7 @@ async function run() {
       app.patch(
         "/all-study-session/:id",
         verifyToken,
-        verifyAdmin,
+        verifyTutor,
         async (req, res) => {
           const id = req.params.id;
           const status = req.body;
