@@ -333,6 +333,17 @@ async function run() {
       }
     );
 
+
+    app.get(
+      "/rejectSession/:id",
+      verifyToken,
+      verifyTutor,
+      async (req, res) => {
+        const result = await studySessionsCollection.findOne({_id: new ObjectId(req.params.id)});
+        res.send(result);
+      }
+    );
+
     // --------------------admin related api------------------------//
 
     //get all session
@@ -381,6 +392,7 @@ async function run() {
         const id = req.params.id;
         const status = req.body;
         const query = { _id: new ObjectId(id) };
+
         const updateDoc = {
           $set: status,
         };
@@ -388,16 +400,20 @@ async function run() {
           query,
           updateDoc
         );
+
         res.send(result);
       }
     );
 
     app.put("/study-session-rejection/:id",verifyToken,verifyAdmin, async(req,res)=>{
       const query = {_id: new ObjectId(req.params.id)};
+      console.log("ddddddddddd",req.body);
       const options = { upsert: true };
         const updateDoc = {
           $set:req.body
         };
+
+        console.log(updateDoc);
         const result = await studySessionsCollection.updateOne(query,updateDoc,options);
         res.send(result)
 
