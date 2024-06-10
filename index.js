@@ -202,7 +202,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/reviews/:id",verifyToken, async (req, res) => {
+    app.get("/reviews/:id", verifyToken, async (req, res) => {
       const query = { sessionID: req.params.id };
       const result = await reviewsCollection.find(query).toArray();
       res.send(result);
@@ -241,17 +241,21 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/my-materials", verifyToken,  async (req, res) => {
+    app.get("/my-materials", verifyToken, async (req, res) => {
       const result = await materialsCollection.find().toArray();
       res.send(result);
     });
 
-
     //---------------------- tutor related api-------------------------//
-    app.post("/create-study-session", verifyToken,verifyTutor, async (req, res) => {
-      const result = await studySessionsCollection.insertOne(req.body);
-      res.send(result);
-    });
+    app.post(
+      "/create-study-session",
+      verifyToken,
+      verifyTutor,
+      async (req, res) => {
+        const result = await studySessionsCollection.insertOne(req.body);
+        res.send(result);
+      }
+    );
 
     app.post("/upload-material", verifyToken, verifyTutor, async (req, res) => {
       console.log(req.body);
@@ -329,26 +333,6 @@ async function run() {
       }
     );
 
-    // Update status
-    app.patch(
-      "/study-session/:id",
-      verifyToken,
-      verifyTutor,
-      async (req, res) => {
-        const id = req.params.id;
-        const status = req.body;
-        const query = { _id: new ObjectId(id) };
-        const updateDoc = {
-          $set: status,
-        };
-        const result = await studySessionsCollection.updateOne(
-          query,
-          updateDoc
-        );
-        res.send(result);
-      }
-    );
-
     // --------------------admin related api------------------------//
 
     //get all session
@@ -383,18 +367,41 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/materials-count", verifyToken, verifyAdmin, async (req, res) => {
+      const count = await materialsCollection.countDocuments();
+      res.send({ count });
+    });
 
-      app.get(
-        "/materials-count",
-        verifyToken,
-        verifyAdmin,
-        async (req, res) => {
-          const count = await materialsCollection.countDocuments();
-          res.send({ count });
-        }
-      );
+    // Update status
+    app.patch(
+      "/study-session/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const status = req.body;
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: status,
+        };
+        const result = await studySessionsCollection.updateOne(
+          query,
+          updateDoc
+        );
+        res.send(result);
+      }
+    );
 
+    app.put("/study-session-rejection/:id",verifyToken,verifyAdmin, async(req,res)=>{
+      const query = {_id: new ObjectId(req.params.id)};
+      const options = { upsert: true };
+        const updateDoc = {
+          $set:req.body
+        };
+        const result = await studySessionsCollection.updateOne(query,updateDoc,options);
+        res.send(result)
 
+    });
 
     //get all users
     app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
@@ -402,17 +409,17 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/all-users",verifyToken,verifyAdmin, async(req,res)=>{
+    app.get("/all-users", verifyToken, verifyAdmin, async (req, res) => {
       const page = parseInt(req.query.page) - 1;
       const size = parseInt(req.query.size);
       const search = req.query.search;
 
-        const query = {
-          $or: [
-            { email: { $regex: search, $options: "i" } },
-            { name: { $regex: search, $options: "i" } },
-          ],
-        };
+      const query = {
+        $or: [
+          { email: { $regex: search, $options: "i" } },
+          { name: { $regex: search, $options: "i" } },
+        ],
+      };
 
       const result = await usersCollection
         .find(query)
@@ -422,17 +429,17 @@ async function run() {
       res.send(result);
     });
 
-      app.get("/users-count", verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/users-count", verifyToken, verifyAdmin, async (req, res) => {
       const search = req.query.search;
-       const query = {
-         $or: [
-           { email: { $regex: search, $options: "i" } },
-           { name: { $regex: search, $options: "i" } },
-         ],
-       };
-        const count = await usersCollection.countDocuments(query);
-        res.send({ count });
-      });
+      const query = {
+        $or: [
+          { email: { $regex: search, $options: "i" } },
+          { name: { $regex: search, $options: "i" } },
+        ],
+      };
+      const count = await usersCollection.countDocuments(query);
+      res.send({ count });
+    });
 
     // Update registrationFee
     app.patch(
