@@ -241,8 +241,8 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/my-materials", verifyToken, async (req, res) => {
-      const result = await materialsCollection.find().toArray();
+    app.get("/my-materials/:id", verifyToken, async (req, res) => {
+      const result = await materialsCollection.find({sessionID: req.params.id}).toArray();
       res.send(result);
     });
 
@@ -379,6 +379,38 @@ async function run() {
       verifyAdmin,
       async (req, res) => {
         const result = await materialsCollection.deleteOne({
+          _id: new ObjectId(req.params.id),
+        });
+        res.send(result);
+      }
+    );
+
+       app.put(
+         "/session/update/:id",
+         verifyToken,
+         verifyAdmin,
+         async (req, res) => {
+           const query = { _id: new ObjectId(req.params.id) };
+           console.log(req.body);
+           const updateDoc = {
+             $set: req.body,
+           };
+           const result = await studySessionsCollection.updateOne(
+             query,
+             updateDoc
+           );
+           res.send(result);
+         }
+       );
+
+
+
+    app.delete(
+      "/session/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const result = await studySessionsCollection.deleteOne({
           _id: new ObjectId(req.params.id),
         });
         res.send(result);
