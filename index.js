@@ -257,6 +257,27 @@ async function run() {
       }
     );
 
+      app.patch(
+        "/all-study-session/:id",
+        verifyToken,
+        verifyAdmin,
+        async (req, res) => {
+          const id = req.params.id;
+          const status = req.body;
+          const query = { _id: new ObjectId(id) };
+
+          const updateDoc = {
+            $set: status,
+          };
+          const result = await studySessionsCollection.updateOne(
+            query,
+            updateDoc
+          );
+
+          res.send(result);
+        }
+      );
+
     app.post("/upload-material", verifyToken, verifyTutor, async (req, res) => {
       console.log(req.body);
       const result = await materialsCollection.insertOne(req.body);
